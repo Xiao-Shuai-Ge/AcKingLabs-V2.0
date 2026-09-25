@@ -1,0 +1,52 @@
+# 复制为 config.yaml 后按需修改；config.yaml 不入库
+app:
+  host: 0.0.0.0
+  port: 8080
+  # 对外访问地址（用于邮件里的链接、上传文件返回的完整 URL），留空则返回相对路径
+  base_url: "http://localhost:8080"
+  # 上传文件保存目录 + 静态资源目录（二维码等）
+  upload_dir: "./data/uploads"
+  static_dir: "./static"
+  # 信任的反向代理 IP 列表（nginx 转发场景填写）；为空则不信任任何代理头
+  trusted_proxies: []
+
+log:
+  level: info
+  dir: "./logs"
+
+database:
+  # 格式见 https://github.com/go-sql-driver/mysql#dsn-data-source-name
+  dsn: "root:123456@tcp(127.0.0.1:3306)/acking_v2?charset=utf8mb4&parseTime=True&loc=Local"
+  migrate: true # 启动时自动建表/补列
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+
+jwt:
+  # 生产环境务必改成足够长的随机串
+  secret: "change-me-to-a-long-random-string"
+
+email:
+  host: "smtp.example.com"
+  port: 465
+  username: "noreply@example.com"
+  password: ""
+
+# 阿里云 OSS（可选）：配置完整后图片上传走 OSS，否则存本地磁盘（app.upload_dir）
+oss:
+  endpoint: "oss-cn-shenzhen.aliyuncs.com"
+  access_key_id: ""
+  access_key_secret: ""
+  bucket: ""
+
+# users 表为空时，首次启动自动创建的超级管理员
+admin:
+  email: "admin@acking.local"
+  username: "admin"
+  password: "admin123456"
+
+invitation:
+  # 全局注册邀请码（除简历通过生成的专属邀请码外的注册通道）
+  code: "ACK-V2"

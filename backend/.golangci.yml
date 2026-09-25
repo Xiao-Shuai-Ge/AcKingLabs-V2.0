@@ -1,0 +1,36 @@
+# golangci-lint 配置（v1.x）
+# 运行：golangci-lint run ./...
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck        # 未检查的错误返回值
+    - govet           # go vet
+    - staticcheck     # 综合静态检查
+    - unused          # 未使用的代码
+    - ineffassign     # 无效赋值
+    - gosimple        # 可简化的写法
+    - misspell        # 拼写错误
+    - unconvert       # 不必要的类型转换
+    - unparam         # 永远不变的参数/返回值
+    - copyloopvar     # 循环变量复制（Go 1.22+）
+    - nolintlint      # nolint 注释必须带理由
+  disable:
+    - goimports # 格式交由 gofmt/gofumpt 与编辑器处理
+
+linters-settings:
+  errcheck:
+    check-blank: false
+  misspell:
+    locale: US
+
+issues:
+  exclude-rules:
+    # 测试文件放宽部分规则
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unparam
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局基础样式 */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 卡片入场动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+/* 隐藏横向滚动条（导航条用） */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* markdown 预览区排版微调 */
+.github-markdown-body .katex {
+  direction: ltr;
+}
+
+/* v-md-editor 的 github 主题自带大内边距与 980px 限宽（.github-markdown-body 默认
+   padding ~45px、.v-md-editor-preview 也有内边距），会与外层卡片的 padding 叠加，
+   导致正文离边框非常远。这里统一去掉，内边距交给外层容器控制。 */
+.v-md-editor-preview,
+.github-markdown-body {
+  padding: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
