@@ -260,9 +260,7 @@ onMounted(load)
               学号：{{ current.student_no }} · 年级：{{ current.grade }}
             </div>
             <div class="text-gray-500">邮箱：{{ current.email }}</div>
-            <div class="text-gray-500">
-              拟注册用户名：{{ current.username || '（未填写）' }}
-            </div>
+            <div class="text-gray-500">拟注册用户名：{{ current.username || '（未填写）' }}</div>
             <div class="text-gray-500">投递：{{ formatDateTime(current.created_at) }}</div>
           </div>
           <el-tag class="ml-auto" :type="statusTag[current.status]?.type ?? 'info'">

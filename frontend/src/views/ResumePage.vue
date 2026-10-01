@@ -368,12 +368,7 @@ function persistEmail() {
         >
           <p class="text-sm text-yellow-700 flex-1">验证码已过期，请重新获取后再提交：</p>
           <div class="flex gap-2">
-            <el-input
-              v-model="form.code"
-              placeholder="6 位验证码"
-              maxlength="6"
-              class="md:!w-36"
-            />
+            <el-input v-model="form.code" placeholder="6 位验证码" maxlength="6" class="md:!w-36" />
             <button
               type="button"
               class="shrink-0 px-4 rounded-lg border text-sm"
@@ -491,7 +486,12 @@ function persistEmail() {
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">对竞赛的理解</label>
-            <el-input v-model="form.extra.understanding" type="textarea" :rows="3" maxlength="2000" />
+            <el-input
+              v-model="form.extra.understanding"
+              type="textarea"
+              :rows="3"
+              maxlength="2000"
+            />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">未来计划</label>
