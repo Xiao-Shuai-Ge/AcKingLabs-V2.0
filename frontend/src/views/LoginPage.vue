@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// 登录 / 注册（邮箱验证码 + 邀请码）
+// 登录 / 注册（注册主通道为投递简历，邀请码注册是特殊通道）
 import { reactive, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { onMounted } from 'vue'
@@ -15,6 +15,9 @@ const { addMessage, codeHandler } = useMessage()
 
 const tab = ref<'login' | 'register'>('login')
 const loading = ref(false)
+
+// 注册 tab：choose = 选择加入方式（主视图），invite = 邀请码注册表单
+const registerMode = ref<'choose' | 'invite'>('choose')
 
 const loginForm = reactive({ email: '', password: '', remember: true })
 const registerForm = reactive({
@@ -181,8 +184,47 @@ async function handleRegister() {
         </button>
       </form>
 
-      <!-- 注册 -->
+      <!-- 注册：主视图 = 选择加入方式（投递简历为主通道） -->
+      <div v-else-if="registerMode === 'choose'" class="space-y-4">
+        <div
+          class="rounded-xl border-2 border-black p-5 cursor-pointer hover:shadow-md transition-shadow"
+          @click="router.push('/more/resume')"
+        >
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fa-solid fa-file-signature text-lg" />
+            <span class="font-bold">投递简历申请加入</span>
+            <span
+              class="ml-auto px-2 py-0.5 rounded-full bg-black text-white text-xs font-medium"
+              >推荐</span
+            >
+          </div>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            无需邀请码。填写简历并验证邮箱，审核通过后自动开通账号，初始密码将发送到您的邮箱。
+          </p>
+        </div>
+
+        <div
+          class="rounded-xl border border-gray-200 p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+          @click="registerMode = 'invite'"
+        >
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fa-solid fa-key text-lg text-gray-500" />
+            <span class="font-medium text-gray-700">我有邀请码，直接注册</span>
+            <i class="fa-solid fa-chevron-right text-gray-300 ml-auto" />
+          </div>
+          <p class="text-sm text-gray-400">内部成员专属通道，凭邀请码立即完成注册。</p>
+        </div>
+      </div>
+
+      <!-- 注册：邀请码注册表单（特殊通道） -->
       <form v-else class="space-y-4" @submit.prevent="handleRegister">
+        <button
+          type="button"
+          class="text-sm text-gray-400 hover:text-gray-600"
+          @click="registerMode = 'choose'"
+        >
+          ‹ 其他加入方式
+        </button>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
           <el-input
@@ -244,8 +286,8 @@ async function handleRegister() {
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            内部邀请码
-            <span class="text-xs text-gray-400">（通过简历审核后由邮箱发放，或向管理员获取）</span>
+            邀请码
+            <span class="text-xs text-gray-400">（内部成员专属通道）</span>
           </label>
           <el-input
             v-model="registerForm.invitation_code"

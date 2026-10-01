@@ -22,6 +22,7 @@ const (
 	CodeResumeExists    = 41009 // 该邮箱已投递过简历
 	CodeContestURLDup   = 41010 // 比赛链接已存在
 	CodeUsernameTaken   = 41011 // 用户名已被占用
+	CodePasswordWrong   = 41012 // 原密码错误
 )
 
 var codeMessages = map[int]string{
@@ -44,6 +45,7 @@ var codeMessages = map[int]string{
 	CodeResumeExists:    "该邮箱已投递过简历",
 	CodeContestURLDup:   "比赛链接已存在",
 	CodeUsernameTaken:   "用户名已被占用",
+	CodePasswordWrong:   "原密码错误",
 }
 
 // Message 返回错误码默认文案

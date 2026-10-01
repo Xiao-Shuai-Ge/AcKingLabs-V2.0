@@ -10,6 +10,7 @@ export interface ResumeSubmitData {
   grade: number
   student_no: string
   email: string
+  username: string // 审核通过自动开通账号时使用的用户名
   code: string
   extra: ResumeExtra
 }

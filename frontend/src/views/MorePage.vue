@@ -20,14 +20,6 @@ const entries = [
     desc: '关于 AcKing 实验室的介绍与贡献成员',
     path: '/more/about',
   },
-  {
-    icon: 'fa-file-signature',
-    color: 'text-green-500',
-    bg: 'bg-green-50',
-    title: '投递简历',
-    desc: '加入 AcKing 实验室，开启您的竞赛之路',
-    path: '/more/resume',
-  },
 ]
 </script>
 

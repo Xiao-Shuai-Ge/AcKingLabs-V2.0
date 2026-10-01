@@ -53,8 +53,9 @@ func ResumeListPage(db *gorm.DB, keyword string, status, page, count int) ([]mod
 	return list, total, err
 }
 
-// ConsumeResumeInviteCode 消耗邀请码（一次性）：仅当未被消耗时置空并返回是否成功
-func ConsumeResumeInviteCode(db *gorm.DB, id int64) error {
-	return db.Model(&model.Resume{}).Where("id = ?", id).
-		Update("invite_code", "").Error
+// ListAdmins 全体管理员（含超管），用于新简历邮件提醒的收件人
+func ListAdmins(db *gorm.DB) ([]model.User, error) {
+	var users []model.User
+	err := db.Where("role >= ?", model.RoleAdmin).Find(&users).Error
+	return users, err
 }

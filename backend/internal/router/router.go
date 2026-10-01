@@ -78,6 +78,7 @@ func registerRoutes(g *gin.RouterGroup) {
 		user.GET("/rankings", middleware.Limiter(1, 8), api.GetRankings)
 		user.GET("/setting", middleware.Auth(model.RoleUser), middleware.Limiter(1, 8), api.GetUserSetting)
 		user.POST("/setting", middleware.Auth(model.RoleUser), middleware.Limiter(0.25, 4), api.UpdateUserSetting)
+		user.POST("/password", middleware.Auth(model.RoleUser), middleware.Limiter(0.25, 4), api.ChangePassword)
 	}
 
 	// ---- 帖子 ----

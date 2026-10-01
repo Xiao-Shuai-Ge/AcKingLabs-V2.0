@@ -56,21 +56,23 @@ type UserSettings struct {
 
 // NotifySettings 通知偏好
 type NotifySettings struct {
-	Like        bool `json:"like"`         // 点赞通知（站内）
-	Comment     bool `json:"comment"`      // 评论/回复通知（站内）
-	Mention     bool `json:"mention"`      // @提及通知（站内）
-	HelpPost    bool `json:"help_post"`    // 新求助帖提醒（站内）
-	SystemEmail bool `json:"system_email"` // 系统消息同步发送邮件
+	Like          bool `json:"like"`            // 点赞通知（站内）
+	Comment       bool `json:"comment"`         // 评论/回复通知（站内）
+	Mention       bool `json:"mention"`         // @提及通知（站内）
+	HelpPost      bool `json:"help_post"`       // 新求助帖提醒（站内）
+	SystemEmail   bool `json:"system_email"`    // 系统消息同步发送邮件
+	NewResumeEmail bool `json:"new_resume_email"` // 新简历邮件提醒（仅管理员生效，非管理员保存时强制 false）
 }
 
 // DefaultNotifySettings 默认偏好：站内通知全开，邮件默认关（避免骚扰）
 func DefaultNotifySettings() NotifySettings {
 	return NotifySettings{
-		Like:        true,
-		Comment:     true,
-		Mention:     true,
-		HelpPost:    true,
-		SystemEmail: false,
+		Like:           true,
+		Comment:        true,
+		Mention:        true,
+		HelpPost:       true,
+		SystemEmail:    false,
+		NewResumeEmail: false,
 	}
 }
 

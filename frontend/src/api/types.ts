@@ -78,10 +78,10 @@ export interface ResumeItem {
   grade: number
   student_no: string
   email: string
+  username: string
   extra: ResumeExtra
-  status: number // 0待处理 1待考核 2已通过 -1未通过
+  status: number // 0待审核 1已通过(账号已开通) -1未通过(可修改后重新投递)
   status_name: string
-  invite_code?: string
   created_at: number
   updated_at: number
 }

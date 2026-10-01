@@ -48,34 +48,31 @@ func SendBookingNotice(to string, url, title string, minutes int64) error {
 	return send([]string{to}, "[AcKing学习分享平台] 比赛预约提醒", body)
 }
 
-// SendInviteCode 简历通过 + 注册邀请码（附考核群二维码）
-func SendInviteCode(to, code string) error {
+// SendResumeApproved 简历通过：账号已自动开通，初始密码随邮件发放（登录后请修改）
+func SendResumeApproved(to, username, initialPassword string) error {
 	body := fmt.Sprintf(`
 <div>
-    <p style="text-indent:2em;">恭喜！您已获得 AcKing 内部平台注册资格。</p>
-    <p style="text-indent:2em;">您的邀请码为：<strong style="color:#007bff;font-size:18px;">%s</strong></p>
-    <p style="text-indent:2em;">请使用此邀请码注册账号，邀请码仅限该邮箱使用。</p>
-    <br>
-    <p style="text-indent:2em;">可以点击下方链接注册账号：</p>
+    <p style="text-indent:2em;">恭喜！您的简历已通过审核，AcKing 学习分享平台账号已自动为您开通。</p>
+    <p style="text-indent:2em;">用户名：<strong style="color:#007bff;font-size:18px;">%s</strong></p>
+    <p style="text-indent:2em;">初始密码：<strong style="color:#007bff;font-size:18px;">%s</strong></p>
+    <p style="text-indent:2em;">请使用本邮箱与初始密码登录，并在「个人设置」中修改密码：</p>
     <a href="%s/login" style="margin:2px;">%s/login</a>
     <br>
     <p style="text-indent:2em;">如有疑问，请联系管理员。</p>
-</div>`, code, app.Cfg.App.BaseURL, app.Cfg.App.BaseURL)
+</div>`, username, initialPassword, app.Cfg.App.BaseURL, app.Cfg.App.BaseURL)
 	return send([]string{to}, "[AcKing学习分享平台] 简历通过通知", body, app.Cfg.App.StaticDir+"/images/qr-code.png")
 }
 
-// SendResumePending 待考核通知（附考核群二维码）
-func SendResumePending(to string) error {
-	body := `
+// SendNewResumeNotify 新简历投递提醒（发给开启了提醒的管理员）
+func SendNewResumeNotify(to, realName, email string) error {
+	link := app.Cfg.App.BaseURL + "/admin/resumes"
+	body := fmt.Sprintf(`
 <div>
-    <p style="text-indent:2em;">恭喜！您的简历已通过初审，等待进入下一轮考核！</p>
-    <br>
-    <p style="text-indent:2em;">请尽快扫描下方二维码加入考核通知群聊，等待考核通知：</p>
-    <img src="cid:qr-code.png" alt="群聊二维码" style="width:100px;height:100px;display:block;margin:0 auto;">
-    <br>
-    <p style="text-indent:2em;">如有疑问，请联系管理员。</p>
-</div>`
-	return send([]string{to}, "[AcKing学习分享平台] 待考核通知", body, app.Cfg.App.StaticDir+"/images/qr-code.png")
+    <p style="text-indent:2em;">收到一份新的简历投递，等待审核：</p>
+    <p style="text-indent:2em;">姓名：<strong>%s</strong>（%s）</p>
+    <p style="text-indent:2em;"><a href="%s">点击前往后台审核</a></p>
+</div>`, realName, email, link)
+	return send([]string{to}, "[AcKing学习分享平台] 新简历待审核", body)
 }
 
 // SendSystemNotice 系统消息邮件（站内消息的邮件同步）

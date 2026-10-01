@@ -32,3 +32,17 @@ func LetterCode(n int) string {
 	}
 	return string(s)
 }
+
+// AlnumCode n 位字母数字随机密码（去掉易混淆的 I O 0 1）
+func AlnumCode(n int) string {
+	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	s := make([]byte, n)
+	for i := range s {
+		v, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+		if err != nil {
+			panic(err)
+		}
+		s[i] = alphabet[v.Int64()]
+	}
+	return string(s)
+}

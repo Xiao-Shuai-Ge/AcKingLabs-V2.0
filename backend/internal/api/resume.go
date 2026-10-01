@@ -16,11 +16,12 @@ type resumeSubmitReq struct {
 	Grade     int               `json:"grade"`
 	StudentNo string            `json:"student_no" binding:"required"`
 	Email     string            `json:"email" binding:"required"`
+	Username  string            `json:"username" binding:"required"`
 	Code      string            `json:"code" binding:"required"`
 	Extra     model.ResumeExtra `json:"extra"`
 }
 
-// SubmitResume POST /api/resume/submit（无需登录，凭邮箱验证码）
+// SubmitResume POST /api/resume/submit（无需登录，凭邮箱验证码；审核通过自动开通账号）
 func SubmitResume(c *gin.Context) {
 	var req resumeSubmitReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -29,7 +30,8 @@ func SubmitResume(c *gin.Context) {
 	}
 	id, err := service.SubmitResume(service.ResumeSubmitReq{
 		Avatar: req.Avatar, RealName: req.RealName, Grade: req.Grade,
-		StudentNo: req.StudentNo, Email: req.Email, Extra: req.Extra,
+		StudentNo: req.StudentNo, Email: req.Email,
+		Username: req.Username, Extra: req.Extra,
 	}, req.Code)
 	response.Auto(c, gin.H{"id": strconv.FormatInt(id, 10)}, err)
 }
@@ -39,7 +41,7 @@ type resumeUpdateReq struct {
 	ID int64 `json:"id,string" binding:"required"`
 }
 
-// UpdateResume POST /api/resume/update
+// UpdateResume POST /api/resume/update（仅待审核/未通过可改；未通过保存即重新投递）
 func UpdateResume(c *gin.Context) {
 	var req resumeUpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -48,7 +50,8 @@ func UpdateResume(c *gin.Context) {
 	}
 	response.Auto(c, nil, service.UpdateResume(service.ResumeSubmitReq{
 		Avatar: req.Avatar, RealName: req.RealName, Grade: req.Grade,
-		StudentNo: req.StudentNo, Email: req.Email, Extra: req.Extra,
+		StudentNo: req.StudentNo, Email: req.Email,
+		Username: req.Username, Extra: req.Extra,
 	}, req.Code, req.ID))
 }
 
@@ -100,7 +103,7 @@ type resumeStatusReq struct {
 	Status int   `json:"status" binding:"required"`
 }
 
-// AdminSetResumeStatus POST /api/admin/resume/status {id, status: 1待考核 2通过 -1拒绝}
+// AdminSetResumeStatus POST /api/admin/resume/status {id, status: 1通过(自动开通账号) -1拒绝}
 func AdminSetResumeStatus(c *gin.Context) {
 	var req resumeStatusReq
 	if err := c.ShouldBindJSON(&req); err != nil {

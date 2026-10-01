@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
 	"acking/internal/app"
@@ -200,6 +201,33 @@ func UpdateProfile(req UpdateProfileReq) error {
 	return repo.SaveUser(app.DB, u)
 }
 
+// validatePassword 密码长度 6~30 字节（注册 / 修改密码共用）
+func validatePassword(password string) error {
+	if l := len(password); l < 6 || l > 30 {
+		return response.NewErrMsg(response.CodeBadRequest, "密码长度需在 6~30 之间")
+	}
+	return nil
+}
+
+// ChangePassword 登录态修改密码（验证原密码；随机初始密码发放后的正式修改入口）
+func ChangePassword(userID int64, oldPassword, newPassword string) error {
+	if err := validatePassword(newPassword); err != nil {
+		return err
+	}
+	u, err := repo.GetUserByID(app.DB, userID)
+	if err != nil {
+		return err
+	}
+	if bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(oldPassword)) != nil {
+		return response.NewErr(response.CodePasswordWrong)
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	return repo.UpdateUserColumns(app.DB, u.ID, map[string]interface{}{"password": string(hash)})
+}
+
 // GetUserSettings 读取用户设置（未设置的字段返回默认值）
 func GetUserSettings(userID int64) (*model.UserSettings, error) {
 	u, err := repo.GetUserByID(app.DB, userID)
@@ -219,6 +247,10 @@ func UpdateUserSettings(userID int64, s model.UserSettings) error {
 	u, err := repo.GetUserByID(app.DB, userID)
 	if err != nil {
 		return err
+	}
+	// 新简历邮件提醒是管理员专属开关，普通用户提交什么都会被强制关掉
+	if u.Role < model.RoleAdmin {
+		s.Notify.NewResumeEmail = false
 	}
 	u.Settings = &s
 	return repo.SaveUser(app.DB, u)
