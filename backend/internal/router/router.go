@@ -126,8 +126,9 @@ func registerRoutes(g *gin.RouterGroup) {
 		msg.POST("/read", middleware.Limiter(1, 8), api.MarkMessageRead)
 	}
 
-	// ---- 文件上传（需登录） ----
-	g.POST("/file/upload", middleware.Auth(model.RoleUser), middleware.Limiter(1.0/20, 5), api.UploadImage)
+	// ---- 文件上传（未登录也可用，投递简历头像；登录/未登录分桶限流） ----
+	g.POST("/file/upload", middleware.OptionalAuth(),
+		middleware.LimiterDual(1.0/20, 5, 1.0/300, 3), api.UploadImage)
 
 	// ---- 管理后台 ----
 	admin := g.Group("/admin", middleware.Auth(model.RoleAdmin))
