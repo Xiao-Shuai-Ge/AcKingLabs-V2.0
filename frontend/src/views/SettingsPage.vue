@@ -2,11 +2,13 @@
 // 个人设置：通知偏好（存 users.settings JSON 列的 notify 分组，
 // 站内消息按偏好过滤生成；"系统消息邮件"开关控制异步邮件同步）
 import { computed, onMounted, reactive, ref } from 'vue'
-import { getUserSetting, updateUserSetting } from '@/api/user'
+import { getUserSetting, updateUserSetting, changePassword } from '@/api/user'
 import type { NotifySettings } from '@/api/user'
+import { useUserStore } from '@/stores/user'
 import { useMessage } from '@/composables/useMessage'
 
 const { addMessage, codeHandler } = useMessage()
+const userStore = useUserStore()
 
 const defaults: NotifySettings = {
   like: true,
@@ -14,6 +16,7 @@ const defaults: NotifySettings = {
   mention: true,
   help_post: true,
   system_email: false,
+  new_resume_email: false,
 }
 
 const form = reactive<NotifySettings>({ ...defaults })
@@ -25,7 +28,7 @@ const dirty = computed(() =>
   (Object.keys(defaults) as (keyof NotifySettings)[]).some((k) => form[k] !== saved.value[k]),
 )
 
-const groups: {
+const baseGroups: {
   key: keyof NotifySettings
   icon: string
   color: string
@@ -69,6 +72,22 @@ const groups: {
   },
 ]
 
+// 新简历邮件提醒：仅管理员可见（后端也会拒绝普通用户开启）
+const groups = computed(() =>
+  userStore.isAdmin
+    ? [
+        ...baseGroups,
+        {
+          key: 'new_resume_email' as keyof NotifySettings,
+          icon: 'fa-file-lines',
+          color: 'text-orange-500 bg-orange-50',
+          title: '新简历邮件提醒',
+          desc: '收到新的简历投递时发送邮件提醒你前往审核（管理员专属）',
+        },
+      ]
+    : baseGroups,
+)
+
 async function load() {
   try {
     const s = await getUserSetting()
@@ -100,6 +119,39 @@ async function save() {
 }
 
 onMounted(load)
+
+// ---- 修改密码 ----
+const pwdForm = reactive({ old_password: '', new_password: '', confirm: '' })
+const changingPwd = ref(false)
+
+const pwdMismatch = computed(
+  () => pwdForm.confirm !== '' && pwdForm.confirm !== pwdForm.new_password,
+)
+const pwdValid = computed(
+  () =>
+    pwdForm.old_password !== '' &&
+    pwdForm.new_password.length >= 6 &&
+    pwdForm.new_password === pwdForm.confirm,
+)
+
+async function savePassword() {
+  if (!pwdValid.value || changingPwd.value) return
+  changingPwd.value = true
+  try {
+    await changePassword({
+      old_password: pwdForm.old_password,
+      new_password: pwdForm.new_password,
+    })
+    addMessage('密码修改成功', 'success')
+    pwdForm.old_password = ''
+    pwdForm.new_password = ''
+    pwdForm.confirm = ''
+  } catch (err) {
+    codeHandler(err)
+  } finally {
+    changingPwd.value = false
+  }
+}
 </script>
 
 <template>
@@ -148,6 +200,51 @@ onMounted(load)
         <i class="fa-solid fa-circle-info" />
         关闭通知后，您仍然可以在消息中心查看所有历史通知
       </p>
+
+      <!-- 修改密码 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 mt-8">
+        <h2 class="font-bold mb-1">修改密码</h2>
+        <p class="text-sm text-gray-400 mb-5">
+          简历审核通过后发放的是随机初始密码，建议登录后尽快修改为自己的密码。
+        </p>
+        <div class="space-y-4 md:w-96">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+            <el-input
+              v-model="pwdForm.old_password"
+              type="password"
+              show-password
+              placeholder="初始密码或当前使用的密码"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+            <el-input
+              v-model="pwdForm.new_password"
+              type="password"
+              show-password
+              placeholder="6~30 位"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+            <el-input
+              v-model="pwdForm.confirm"
+              type="password"
+              show-password
+              placeholder="再次输入新密码"
+            />
+            <p v-if="pwdMismatch" class="text-xs text-red-500 mt-1">两次输入的新密码不一致</p>
+          </div>
+          <button
+            class="px-6 py-2.5 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            :disabled="!pwdValid || changingPwd"
+            @click="savePassword"
+          >
+            {{ changingPwd ? '提交中...' : '修改密码' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

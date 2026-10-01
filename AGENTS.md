@@ -90,6 +90,12 @@ npm run build                               # 构建（vue-tsc 类型检查 + vi
 
 ## 提交约定
 
-- 一个提交做一件事，消息格式：`模块: 做了什么`（如 `post: 修复私帖评论未鉴权`）。
+- 提交消息用 conventional commits 格式：`feat: 新功能`、`fix: 修 bug`、`docs: 文档`、`refactor: 重构`、`test: 测试`、`chore: 杂项`；一个提交做一件事。
 - 动数据库结构、改错误码、改 API 字段的提交，必须在 AGENTS.md 里补一句说明。
 - 提交前本地过一遍：后端 `go test` + `golangci-lint run`，前端 `npm run test` + `npm run lint`（CI 会跑同样的检查）。
+
+## 变更记录
+
+- 2026-10 账号/简历流程重构：注册仅认全局邀请码（简历专属邀请码废除，`resumes.invite_code` 删除）；简历新增 `username`/`password`（bcrypt），状态枚举重排为 `0待审核 / 1已通过 / -1未通过`（待考核态删除），管理员审核通过时在事务内自动开通账号；未通过的简历可由本人修改后重新投递（update 接口覆盖原记录并重置为待审核）；`users.settings.notify` 新增 `new_resume_email`（管理员专属的新简历邮件提醒，个人设置页开关）。
+- 2026-10 二轮调整：投递页改两步向导（先验证邮箱再填简历；`/api/resume/detail` 改为验证码不消耗模式、成功后有效期延长 30 分钟，并拒绝已注册邮箱）；`resumes.password` 列删除，初始密码改为审核通过时随机生成（`randkit.AlnumCode`）随通过邮件发放；新增登录态修改密码接口 `POST /api/user/password`（新错误码 `41012` 原密码错误）；前端注册页主入口改为投递简历，邀请码注册降为特殊通道；更多页移除投递简历入口。
+- 2026-10 上传与限流：`POST /api/file/upload` 开放未登录使用（投递简历头像），登录/未登录分桶限流（`LimiterDual`：登录 1 张/20s 突发 5、未登录 1 张/5min 突发 3）；修复限流桶缓存键不含参数导致同身份跨接口共享桶参数的问题（缓存键拼上限流参数）。

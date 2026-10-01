@@ -48,6 +48,6 @@ export function contestStatus(start: number, end: number): ContestStatus {
 }
 
 export function avatarUrl(avatar: string): string {
-  if (!avatar) return '/assets/not_logged_in.png'
+  if (!avatar) return '/assets/default_avatar.png'
   return avatar
 }

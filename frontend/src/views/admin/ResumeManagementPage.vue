@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// 简历管理：列表筛选、详情、待考核/通过(邀请码)/拒绝/删除；状态语义与投递页一致
+// 简历管理：列表筛选、详情、通过(自动开通账号)/拒绝/删除；状态语义与投递页一致
 import { onMounted, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import {
@@ -25,9 +25,8 @@ const resumes = ref<ResumeItem[]>([])
 const loading = ref(false)
 
 const statusOptions = [
-  { value: 0, label: '待处理' },
-  { value: 1, label: '待考核' },
-  { value: 2, label: '已通过' },
+  { value: 0, label: '待审核' },
+  { value: 1, label: '已通过' },
   { value: -1, label: '未通过' },
 ]
 
@@ -35,9 +34,8 @@ const statusTag: Record<
   number,
   { label: string; type: 'primary' | 'warning' | 'success' | 'danger' }
 > = {
-  0: { label: '待处理', type: 'primary' },
-  1: { label: '待考核', type: 'warning' },
-  2: { label: '已通过', type: 'success' },
+  0: { label: '待审核', type: 'primary' },
+  1: { label: '已通过', type: 'success' },
   [-1]: { label: '未通过', type: 'danger' },
 }
 
@@ -84,7 +82,7 @@ function closeAndSetStatus(r: ResumeItem, status: number) {
 }
 
 async function setStatus(r: ResumeItem, status: number) {
-  const action = status === 1 ? '设为待考核' : status === 2 ? '通过（将生成注册邀请码）' : '拒绝'
+  const action = status === 1 ? '通过（自动开通账号）' : '拒绝'
   try {
     await ElMessageBox.confirm(`确定将该简历${action}吗？将通过邮件通知申请人。`, '简历审核', {
       type: 'warning',
@@ -93,15 +91,8 @@ async function setStatus(r: ResumeItem, status: number) {
     return
   }
   try {
-    const updated = await adminResumeStatus(r.id, status)
+    await adminResumeStatus(r.id, status)
     addMessage('操作成功', 'success')
-    if (status === 2 && updated.invite_code) {
-      ElMessageBox.alert(
-        `邀请码：<b style="font-size:20px;color:#007bff">${updated.invite_code}</b><br/><br/>已发送到申请人邮箱，也可手动转发给申请人。`,
-        '注册邀请码',
-        { dangerouslyUseHTMLString: true, confirmButtonText: '知道了' },
-      ).catch(() => {})
-    }
     load()
   } catch (err) {
     codeHandler(err)
@@ -143,7 +134,7 @@ onMounted(load)
         <div class="mb-6">
           <h1 class="text-2xl font-bold">简历管理</h1>
           <p class="text-sm text-gray-500 mt-1">
-            审核投递的简历：待考核 / 通过（发放邀请码）/ 拒绝
+            审核投递的简历：通过后自动开通账号 / 拒绝；未通过的简历可由本人修改后重新投递
           </p>
         </div>
 
@@ -208,7 +199,7 @@ onMounted(load)
             <el-table-column label="投递时间" width="160">
               <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="230" fixed="right">
+            <el-table-column label="操作" width="180" fixed="right">
               <template #default="{ row }">
                 <el-button link type="primary" size="small" @click="openDetail(row)"
                   >查看</el-button
@@ -216,21 +207,13 @@ onMounted(load)
                 <el-button
                   v-if="row.status === 0"
                   link
-                  type="warning"
-                  size="small"
-                  @click="setStatus(row, 1)"
-                  >待考核</el-button
-                >
-                <el-button
-                  v-if="row.status === 0 || row.status === 1"
-                  link
                   type="success"
                   size="small"
-                  @click="setStatus(row, 2)"
+                  @click="setStatus(row, 1)"
                   >通过</el-button
                 >
                 <el-button
-                  v-if="row.status === 0 || row.status === 1"
+                  v-if="row.status === 0"
                   link
                   type="danger"
                   size="small"
@@ -277,6 +260,7 @@ onMounted(load)
               学号：{{ current.student_no }} · 年级：{{ current.grade }}
             </div>
             <div class="text-gray-500">邮箱：{{ current.email }}</div>
+            <div class="text-gray-500">拟注册用户名：{{ current.username || '（未填写）' }}</div>
             <div class="text-gray-500">投递：{{ formatDateTime(current.created_at) }}</div>
           </div>
           <el-tag class="ml-auto" :type="statusTag[current.status]?.type ?? 'info'">
@@ -320,20 +304,13 @@ onMounted(load)
         <div class="flex gap-3 mt-8 pt-4 border-t">
           <button
             v-if="current.status === 0"
-            class="px-5 py-2 rounded-lg bg-yellow-500 text-white text-sm font-medium hover:bg-yellow-600"
+            class="px-5 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700"
             @click="closeAndSetStatus(current, 1)"
           >
-            设为待考核
+            通过并开通账号
           </button>
           <button
-            v-if="current.status === 0 || current.status === 1"
-            class="px-5 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700"
-            @click="closeAndSetStatus(current, 2)"
-          >
-            通过简历
-          </button>
-          <button
-            v-if="current.status === 0 || current.status === 1"
+            v-if="current.status === 0"
             class="px-5 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600"
             @click="closeAndSetStatus(current, -1)"
           >

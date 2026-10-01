@@ -131,8 +131,18 @@ func codeDelete(email string) {
 	delete(memCodes, email)
 }
 
-// VerifyCode 校验验证码（消耗尝试次数；成功后删除
+// VerifyCode 校验验证码（消耗尝试次数；成功后删除）
 func VerifyCode(email, code string) error {
+	return verifyCodeImpl(email, code, false)
+}
+
+// VerifyCodeKeep 校验验证码但不消耗，成功后把有效期延长到 resumeCodeTTL。
+// 供投递简历两步向导使用：第一步验证邮箱、第二步提交复用同一个验证码。
+func VerifyCodeKeep(email, code string) error {
+	return verifyCodeImpl(email, code, true)
+}
+
+func verifyCodeImpl(email, code string, keep bool) error {
 	want, ok := codeGet(email)
 	if !ok {
 		return response.NewErr(response.CodeVerifyWrong)
@@ -144,8 +154,30 @@ func VerifyCode(email, code string) error {
 		}
 		return response.NewErr(response.CodeVerifyWrong)
 	}
+	if keep {
+		codeExtendTTL(email, resumeCodeTTL)
+		return nil
+	}
 	codeDelete(email)
 	return nil
+}
+
+// resumeCodeTTL 向导第一步验证后给填表预留的验证码有效期
+const resumeCodeTTL = 30 * time.Minute
+
+// codeExtendTTL 延长验证码及尝试计数的有效期（仅对仍存在的验证码生效）
+func codeExtendTTL(email string, ttl time.Duration) {
+	if app.RedisOK() {
+		ctx := context.Background()
+		app.RDB.Expire(ctx, codeKey(email), ttl)
+		app.RDB.Expire(ctx, codeKey(email)+":tries", ttl)
+		return
+	}
+	memCodeMu.Lock()
+	defer memCodeMu.Unlock()
+	if e, ok := memCodes[email]; ok && time.Now().Before(e.code.expires) {
+		e.code.expires = time.Now().Add(ttl)
+	}
 }
 
 // ---- 认证业务 ----
@@ -181,10 +213,11 @@ type RegisterReq struct {
 	Invite   string
 }
 
-// Register 注册：邀请码 = 全局邀请码，或"简历已通过 + 该邮箱专属邀请码（一次性）"
+// Register 注册（邀请码直接注册通道；无邀请码的用户走投递简历，审核通过自动开通账号）
 func Register(req RegisterReq) (access, refresh string, err error) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	req.Username = strings.TrimSpace(req.Username)
+	req.Invite = strings.TrimSpace(req.Invite)
 	if !emailRe.MatchString(req.Email) {
 		return "", "", response.NewErrMsg(response.CodeBadRequest, "邮箱格式不正确")
 	}
@@ -196,6 +229,10 @@ func Register(req RegisterReq) (access, refresh string, err error) {
 	}
 	if l := len(req.Password); l < 6 || l > 30 {
 		return "", "", response.NewErrMsg(response.CodeBadRequest, "密码长度需在 6~30 之间")
+	}
+	// 只认全局邀请码；放在验证码校验之前，避免输错邀请码烧掉邮箱验证码
+	if req.Invite == "" || req.Invite != app.Cfg.Invitation.Code {
+		return "", "", response.NewErrMsg(response.CodeInviteInvalid, "邀请码无效；没有邀请码可投递简历，审核通过后自动开通账号")
 	}
 
 	if err := VerifyCode(req.Email, req.Code); err != nil {
@@ -214,38 +251,16 @@ func Register(req RegisterReq) (access, refresh string, err error) {
 		return "", "", response.NewErr(response.CodeUsernameTaken)
 	}
 
-	user := model.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Role:     model.RoleUser,
-	}
-
-	// 邀请码校验：全局码 or 简历专属码
-	if req.Invite == "" {
-		return "", "", response.NewErr(response.CodeInviteInvalid)
-	}
-	if req.Invite != app.Cfg.Invitation.Code {
-		r, err := repo.GetResumeByEmail(app.DB, req.Email)
-		if err != nil {
-			return "", "", err
-		}
-		if r == nil || r.Status != model.ResumeAccepted || r.InviteCode == "" || r.InviteCode != req.Invite {
-			return "", "", response.NewErr(response.CodeInviteInvalid)
-		}
-		// 专属邀请码一次性消耗，同时把实名信息带入账号
-		if err := repo.ConsumeResumeInviteCode(app.DB, r.ID); err != nil {
-			return "", "", err
-		}
-		user.RealName = r.RealName
-		user.Grade = r.Grade
-		user.StudentNo = r.StudentNo
-	}
-
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", "", err
 	}
-	user.Password = string(hash)
+	user := model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: string(hash),
+		Role:     model.RoleUser,
+	}
 	if err := repo.CreateUser(app.DB, &user); err != nil {
 		return "", "", err
 	}

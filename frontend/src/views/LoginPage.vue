@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// 登录 / 注册（邮箱验证码 + 邀请码）
+// 登录 / 注册（注册主通道为投递简历，邀请码注册是特殊通道）
 import { reactive, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { onMounted } from 'vue'
@@ -15,6 +15,9 @@ const { addMessage, codeHandler } = useMessage()
 
 const tab = ref<'login' | 'register'>('login')
 const loading = ref(false)
+
+// 注册 tab：choose = 选择加入方式（主视图），invite = 邀请码注册表单
+const registerMode = ref<'choose' | 'invite'>('choose')
 
 const loginForm = reactive({ email: '', password: '', remember: true })
 const registerForm = reactive({
@@ -181,8 +184,36 @@ async function handleRegister() {
         </button>
       </form>
 
-      <!-- 注册 -->
+      <!-- 注册：主视图 = 选择加入方式（投递简历为主通道） -->
+      <div v-else-if="registerMode === 'choose'" class="space-y-4">
+        <div
+          class="rounded-xl border-2 border-black p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow"
+          @click="router.push('/more/resume')"
+        >
+          <i class="fa-solid fa-file-signature text-lg" />
+          <span class="font-bold">投递简历注册</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 ml-auto" />
+        </div>
+
+        <div
+          class="rounded-xl border border-gray-200 p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
+          @click="registerMode = 'invite'"
+        >
+          <i class="fa-solid fa-key text-lg text-gray-500" />
+          <span class="font-medium text-gray-700">邀请码注册</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 ml-auto" />
+        </div>
+      </div>
+
+      <!-- 注册：邀请码注册表单（特殊通道） -->
       <form v-else class="space-y-4" @submit.prevent="handleRegister">
+        <button
+          type="button"
+          class="text-sm text-gray-400 hover:text-gray-600"
+          @click="registerMode = 'choose'"
+        >
+          ‹ 其他加入方式
+        </button>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
           <el-input
@@ -243,10 +274,7 @@ async function handleRegister() {
           <p v-if="passwordMismatch" class="text-xs text-red-500 mt-1">两次输入的密码不一致</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            内部邀请码
-            <span class="text-xs text-gray-400">（通过简历审核后由邮箱发放，或向管理员获取）</span>
-          </label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">邀请码</label>
           <el-input
             v-model="registerForm.invitation_code"
             placeholder="请输入邀请码"

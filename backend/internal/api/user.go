@@ -101,6 +101,22 @@ func UpdateUserSetting(c *gin.Context) {
 	response.Auto(c, nil, service.UpdateUserSettings(uid, req.Settings))
 }
 
+type changePasswordReq struct {
+	OldPassword string `json:"old_password" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required"`
+}
+
+// ChangePassword POST /api/user/password（登录态修改密码）
+func ChangePassword(c *gin.Context) {
+	var req changePasswordReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailCode(c, response.CodeBadRequest)
+		return
+	}
+	uid, _ := middleware.CurrentUser(c)
+	response.Auto(c, nil, service.ChangePassword(uid, req.OldPassword, req.NewPassword))
+}
+
 // GetRankings GET /api/user/rankings?page&count
 func GetRankings(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))

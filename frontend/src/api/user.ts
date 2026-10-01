@@ -66,6 +66,7 @@ export interface NotifySettings {
   mention: boolean
   help_post: boolean
   system_email: boolean
+  new_resume_email: boolean // 新简历邮件提醒（仅管理员生效）
 }
 
 export interface UserSettings {
@@ -75,6 +76,10 @@ export interface UserSettings {
 export const getUserSetting = () => get<UserSettings>('/api/user/setting')
 
 export const updateUserSetting = (settings: UserSettings) => post('/api/user/setting', { settings })
+
+// 修改密码（登录态，验证原密码）
+export const changePassword = (data: { old_password: string; new_password: string }) =>
+  post('/api/user/password', data)
 
 // ---- 排行榜 ----
 export interface RankingItem {
