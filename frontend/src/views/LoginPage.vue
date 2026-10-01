@@ -187,32 +187,21 @@ async function handleRegister() {
       <!-- 注册：主视图 = 选择加入方式（投递简历为主通道） -->
       <div v-else-if="registerMode === 'choose'" class="space-y-4">
         <div
-          class="rounded-xl border-2 border-black p-5 cursor-pointer hover:shadow-md transition-shadow"
+          class="rounded-xl border-2 border-black p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow"
           @click="router.push('/more/resume')"
         >
-          <div class="flex items-center gap-3 mb-2">
-            <i class="fa-solid fa-file-signature text-lg" />
-            <span class="font-bold">投递简历申请加入</span>
-            <span
-              class="ml-auto px-2 py-0.5 rounded-full bg-black text-white text-xs font-medium"
-              >推荐</span
-            >
-          </div>
-          <p class="text-sm text-gray-500 leading-relaxed">
-            无需邀请码。填写简历并验证邮箱，审核通过后自动开通账号，初始密码将发送到您的邮箱。
-          </p>
+          <i class="fa-solid fa-file-signature text-lg" />
+          <span class="font-bold">投递简历注册</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 ml-auto" />
         </div>
 
         <div
-          class="rounded-xl border border-gray-200 p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+          class="rounded-xl border border-gray-200 p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
           @click="registerMode = 'invite'"
         >
-          <div class="flex items-center gap-3 mb-2">
-            <i class="fa-solid fa-key text-lg text-gray-500" />
-            <span class="font-medium text-gray-700">我有邀请码，直接注册</span>
-            <i class="fa-solid fa-chevron-right text-gray-300 ml-auto" />
-          </div>
-          <p class="text-sm text-gray-400">内部成员专属通道，凭邀请码立即完成注册。</p>
+          <i class="fa-solid fa-key text-lg text-gray-500" />
+          <span class="font-medium text-gray-700">邀请码注册</span>
+          <i class="fa-solid fa-chevron-right text-gray-300 ml-auto" />
         </div>
       </div>
 
@@ -285,10 +274,7 @@ async function handleRegister() {
           <p v-if="passwordMismatch" class="text-xs text-red-500 mt-1">两次输入的密码不一致</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            邀请码
-            <span class="text-xs text-gray-400">（内部成员专属通道）</span>
-          </label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">邀请码</label>
           <el-input
             v-model="registerForm.invitation_code"
             placeholder="请输入邀请码"
